@@ -93,9 +93,11 @@ class Renderer {
     this.particles = [];
     this.shaking = false;
     this.bobTime = 0;
+    this.bats = [];
+    this.fallingStalactites = []; // Track falling stone objects
+    this.currentMultiplier = 1.0;
     this.scrollX = 0;
     this.wheelAngle = 0;
-    this.bats = [];
   }
 
   triggerCrash() {
@@ -170,6 +172,50 @@ class Renderer {
 
     // Update bats
     this._updateBats(dt, running);
+
+    // Update falling stalactites
+    this._updateFallingStalactites(dt);
+  }
+
+  _updateFallingStalactites(dt) {
+    for (let i = this.fallingStalactites.length - 1; i >= 0; i--) {
+      const s = this.fallingStalactites[i];
+      s.y += s.vy * 60 * dt;
+      s.vy += 0.3 * 60 * dt; // Gravity
+      s.rotation += s.rotV;
+
+      // Check collision with ground/rails approx
+      const groundY = this.getRailHeight(s.x);
+      if (s.y > groundY - 20) {
+        // Break!
+        this._spawnStalactiteBreak(s.x, s.y);
+        this.fallingStalactites.splice(i, 1);
+      } else if (s.y > this.H + 100) {
+        this.fallingStalactites.splice(i, 1);
+      }
+    }
+  }
+
+  _spawnStalactiteBreak(x, y) {
+    const colors = ['#4a3020', '#3d2510', '#5a4030', '#2a1a0e'];
+    for (let i = 0; i < 12; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = 1 + Math.random() * 4;
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 20,
+        y: y,
+        vx: Math.cos(angle) * spd,
+        vy: -Math.random() * 4,
+        size: 2 + Math.random() * 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 0.5 + Math.random() * 0.5,
+        rot: Math.random() * Math.PI * 2,
+        rotV: (Math.random() - 0.5) * 0.3,
+        square: Math.random() > 0.3
+      });
+    }
+    // Small screen shake on impact
+    if (this.currentMultiplier > 3) this.startShake(2);
   }
 
   _updateBats(dt, running) {
@@ -413,6 +459,24 @@ class Renderer {
       ctx.lineTo(x, this.getRailHeight(x) - groundOverlap);
     }
     ctx.stroke();
+
+    // Draw falling stalactites on top of ground/rails
+    this._drawFallingStalactites();
+  }
+
+  _drawFallingStalactites() {
+    const ctx = this.ctx;
+    const stImg = this.customAssets.stone;
+    if (!stImg.complete || stImg.naturalWidth === 0) return;
+
+    for (const s of this.fallingStalactites) {
+      ctx.save();
+      ctx.globalAlpha = s.opacity;
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.rotation);
+      ctx.drawImage(stImg, -s.width / 2, -s.height * 0.8, s.width, s.height);
+      ctx.restore();
+    }
   }
 
   _drawRockWalls(W, H, offsetX, opacity, includeStalactites = true) {
@@ -427,8 +491,8 @@ class Renderer {
     // Use an absolute grid based on scroll offset to prevent backward movement / mutating
     const stSpacing = W * 0.08;
     const startCol = Math.floor(offsetX / stSpacing);
-    const pxOff = offsetX % stSpacing;
-    const stCount = Math.ceil(W / stSpacing) + 4; // Extra buffer for jitter
+    const pxOff = Math.floor(offsetX % stSpacing); // Math.floor to reduce sub-pixel jitter
+    const stCount = Math.ceil(W / stSpacing) + 5; // Added buffer
 
     if (includeStalactites) {
       if (stImg.complete && stImg.naturalWidth > 0) {
@@ -449,7 +513,25 @@ class Renderer {
         const yOffset = -(height * 0.7) - (60 * this.baseScale);
 
         ctx.globalAlpha = 0.5 + seed * 0.5;
-        ctx.drawImage(stImg, bx - width / 2, yOffset, width, height);
+        // Drawing at integer positions to avoid sub-pixel jitter
+        ctx.drawImage(stImg, Math.floor(bx - width / 2), Math.floor(yOffset), Math.floor(width), Math.floor(height));
+        
+        // --- Spawning falling stalactites naturally ---
+        if (includeStalactites && this.currentMultiplier > 2.0 && Math.random() < 0.001) {
+          // Only spawn if not already too many on screen
+          if (this.fallingStalactites.length < 5) {
+             this.fallingStalactites.push({
+               x: bx,
+               y: 0,
+               vy: 2 + Math.random() * 5,
+               width: width,
+               height: height,
+               rotation: 0,
+               rotV: (Math.random() - 0.5) * 0.1,
+               opacity: opacity
+             });
+          }
+        }
       }
     } else {
       // Fallback native stalactites (original triangles)
