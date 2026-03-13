@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d0d0f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>MineRush – Crash Mining Game</title>
+  <link rel="stylesheet" href="style.css?v=1.1">
+</head>
+<body>
+  <div id="app">
+    <!-- Header / Multiplier Display -->
+    <div id="header">
+      <div id="multiplier-wrap">
+        <span id="multiplier-label">MULTIPLIER</span>
+        <span id="multiplier-value">1.00x</span>
+        <span id="crash-label" class="hidden">CRASHED!</span>
+      </div>
+      <div id="balance-wrap">
+        <span class="label">BALANCE</span>
+        <span id="balance-value">1000</span>
+        <span class="label"> coins</span>
+      </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay" class="hidden">
+      <div id="countdown-text">3</div>
+    </div>
+
+    <!-- Cashout Float Overlay -->
+    <div id="cashout-toast" class="hidden"></div>
+
+    <!-- Result Overlay -->
+    <div id="result-overlay" class="hidden">
+      <div id="result-box">
+        <img id="collect-char" src="assets/collect_char.png" alt="Guru" class="hidden">
+        <div id="result-title">CRASHED!</div>
+        <div id="result-detail"></div>
+        <button id="play-again-btn">Play Again</button>
+      </div>
+    </div>
+
+    <!-- Bottom UI Panel -->
+    <div id="bottom-panel">
+      <!-- Waiting state controls -->
+      <div id="bet-controls" class="control-group">
+        <div class="bet-field">
+          <label for="bet-input">BET AMOUNT</label>
+          <div class="bet-row">
+            <button class="bet-adj" id="half-btn">½</button>
+            <input type="number" id="bet-input" min="1" max="10000" value="100" />
+            <button class="bet-adj" id="double-btn">2×</button>
+          </div>
+        </div>
+        <button id="bet-btn" class="main-btn">PLACE BET</button>
+      </div>
+
+      <!-- Running state controls -->
+      <div id="cashout-controls" class="control-group hidden">
+        <div id="potential-win">
+          <span class="label">POTENTIAL WIN</span>
+          <span id="potential-value">100</span>
+          <span class="label"> coins</span>
+        </div>
+        <button id="cashout-btn" class="main-btn cashout">CASH OUT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Engine / Logic Scripts -->
+  <script src="renderer.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

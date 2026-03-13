@@ -1,0 +1,575 @@
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #0d0d0f;
+  --panel:      #16171e;
+  --panel2:     #1e1f2b;
+  --accent:     #f5a623;
+  --accent2:    #e0521c;
+  --cash:       #3de07c;
+  --crash:      #e03434;
+  --text:       #e8e8f0;
+  --muted:      #6b6b80;
+  --border:     #2a2b3a;
+  --radius:     12px;
+  --font:       'Segoe UI', system-ui, sans-serif;
+
+  /* Fluid header height — shrinks on small screens */
+  --header-h:   clamp(56px, 10vh, 80px);
+  /* Fluid bottom panel height */
+  --panel-h:    clamp(90px, 14vh, 130px);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  overflow: hidden;
+  user-select: none;
+  /* Disable double-tap zoom on mobile */
+  touch-action: manipulation;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  /* Fallback for browsers that don't support dvh */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* Safe area insets for iPhone notch / home bar */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* ===== Header ===== */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(12px, 4vw, 28px);
+  height: var(--header-h);
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+#multiplier-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+#multiplier-label {
+  font-size: clamp(9px, 1.5vw, 11px);
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+#multiplier-value {
+  font-size: clamp(28px, 6vw, 52px);
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -1px;
+  transition: color 0.15s;
+  text-shadow: 0 0 24px rgba(245, 166, 35, 0.4);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  position: relative;
+  z-index: 10;
+}
+
+#multiplier-value.high   { color: #f0c040; text-shadow: 0 0 32px rgba(240, 192, 64, 0.6); }
+#multiplier-value.danger { color: #ff7043; text-shadow: 0 0 32px rgba(255, 112, 67, 0.7); }
+
+#crash-label {
+  font-size: clamp(10px, 2vw, 14px);
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--crash);
+  text-transform: uppercase;
+  margin-top: 2px;
+  animation: pulse-crash 0.4s ease infinite alternate;
+}
+
+@keyframes pulse-crash {
+  from { opacity: 0.7; transform: scale(0.98); }
+  to   { opacity: 1;   transform: scale(1.02); }
+}
+
+#balance-wrap {
+  font-size: clamp(11px, 2vw, 14px);
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+#balance-value {
+  font-size: clamp(14px, 3vw, 18px);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ===== Coin Particles ===== */
+.coin-particle {
+  position: absolute;
+  top: 100%; /* Push below the multiplier text completely */
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 5;
+  will-change: transform, opacity;
+}
+
+.gem-particle {
+  width: 64px;  /* Gems are now 2x larger (was 32px) */
+  height: 64px;
+  filter: drop-shadow(0 0 15px rgba(0, 200, 255, 0.9)); /* Stronger cyan glow */
+  animation: pulse-gem 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-gem {
+  0% { transform: scale(0.9); filter: drop-shadow(0 0 10px rgba(0, 200, 255, 0.7)); }
+  100% { transform: scale(1.1); filter: drop-shadow(0 0 25px rgba(0, 255, 255, 1)); }
+}
+
+/* ===== Bat Elements (DOM) ===== */
+#bat-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.bat-element {
+  position: absolute;
+  width: 120px;
+  height: auto;
+  will-change: transform;
+  /* Multiply handles the white background of the GIF against dark cave */
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* ===== Canvas ===== */
+#game-canvas {
+  flex: 1;
+  display: block;
+  background: #0a0a0e;
+  cursor: default;
+  width: 100%;
+  /* Canvas height fills remaining space between header and bottom panel */
+  min-height: 0;
+}
+
+/* ===== Countdown Overlay ===== */
+#countdown-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 20;
+}
+
+#countdown-text {
+  font-size: clamp(72px, 18vw, 140px);
+  font-weight: 900;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 0 60px rgba(245, 166, 35, 0.8), 0 4px 20px rgba(0,0,0,0.6);
+  animation: countdown-pop 0.5s ease forwards;
+}
+
+@keyframes countdown-pop {
+  0%   { transform: scale(1.4); opacity: 0; }
+  60%  { transform: scale(0.95); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===== Result Overlay ===== */
+#result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+
+#result-box {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: clamp(24px, 5vw, 48px) clamp(20px, 6vw, 64px);
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  max-width: 460px;
+  width: 100%;
+}
+
+#result-title {
+  font-size: clamp(22px, 5vw, 36px);
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+#result-title.win  { color: var(--cash);  }
+#result-title.loss { color: var(--crash); }
+
+#collect-char {
+  width: clamp(120px, 25vw, 180px);
+  height: auto;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+  animation: char-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes char-pop {
+  0% { transform: scale(0.5) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+#result-detail {
+  font-size: clamp(13px, 2.5vw, 16px);
+  color: var(--muted);
+  margin-bottom: clamp(16px, 4vw, 28px);
+  line-height: 1.6;
+}
+
+/* Enhancements for Win Popup */
+#result-box.win-box {
+  transform: scale(1.15);
+  box-shadow: 0 20px 80px rgba(61, 224, 124, 0.4);
+  border-color: rgba(61, 224, 124, 0.5);
+  animation: win-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes win-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+.win-multiplier {
+  font-size: clamp(48px, 10vw, 84px);
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(245, 166, 35, 0.5);
+  margin-top: 10px;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.win-amount {
+  font-size: clamp(24px, 5vw, 42px);
+  font-weight: 800;
+  color: var(--cash);
+  text-shadow: 0 0 20px rgba(61, 224, 124, 0.4);
+}
+
+/* ===== Bottom Panel ===== */
+#bottom-panel {
+  height: var(--panel-h);
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0 clamp(12px, 4vw, 28px);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 3vw, 24px);
+  width: 100%;
+  max-width: 640px;
+}
+
+/* Bet Controls */
+.bet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.bet-field label {
+  font-size: clamp(8px, 1.5vw, 10px);
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.bet-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+input#bet-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: clamp(16px, 3vw, 22px);
+  font-weight: 700;
+  padding: clamp(8px, 1.5vh, 12px) 10px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: var(--font);
+  min-width: 0;
+}
+
+input#bet-input:focus { border-color: var(--accent); }
+input#bet-input::-webkit-inner-spin-button,
+input#bet-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.bet-adj {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: clamp(12px, 2vw, 15px);
+  font-weight: 600;
+  padding: clamp(8px, 1.5vh, 12px) clamp(10px, 2vw, 16px);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  /* Minimum touch target: 44×44px */
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bet-adj:hover  { background: var(--border); border-color: var(--accent); }
+.bet-adj:active { background: var(--accent); color: #000; }
+
+/* Buttons */
+.main-btn {
+  background: linear-gradient(135deg, #f5a623, #e0521c);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: clamp(13px, 2.5vw, 16px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: clamp(10px, 2vh, 16px) clamp(18px, 4vw, 36px);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s, filter 0.2s;
+  white-space: nowrap;
+  text-transform: uppercase;
+  box-shadow: 0 4px 20px rgba(245, 166, 35, 0.3);
+  /* Minimum touch target */
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.main-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(245, 166, 35, 0.45); }
+.main-btn:active { transform: translateY(0); }
+.main-btn:disabled { filter: grayscale(0.6); cursor: not-allowed; transform: none; box-shadow: none; }
+
+.main-btn.cashout {
+  background: linear-gradient(135deg, #3de07c, #22a856);
+  font-size: clamp(14px, 3vw, 19px);
+  padding: clamp(12px, 2vh, 18px) clamp(20px, 5vw, 44px);
+  box-shadow: 0 4px 24px rgba(61, 224, 124, 0.4);
+  animation: cashout-pulse 1.2s ease infinite;
+}
+.main-btn.cashout:hover { box-shadow: 0 6px 32px rgba(61, 224, 124, 0.6); }
+
+@keyframes cashout-pulse {
+  0%, 100% { box-shadow: 0 4px 24px rgba(61, 224, 124, 0.4); }
+  50%       { box-shadow: 0 4px 40px rgba(61, 224, 124, 0.7); }
+}
+
+#play-again-btn {
+  background: linear-gradient(135deg, #f5a623, #e0521c);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: clamp(13px, 2.5vw, 16px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: clamp(10px, 2vh, 16px) clamp(24px, 5vw, 44px);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+  text-transform: uppercase;
+  box-shadow: 0 4px 20px rgba(245, 166, 35, 0.3);
+  min-height: 44px;
+}
+#play-again-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(245, 166, 35, 0.45); }
+#play-again-btn:active { transform: translateY(0); }
+
+/* Potential win display */
+#potential-win {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+#potential-win .label {
+  font-size: clamp(8px, 1.5vw, 10px);
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+#potential-value {
+  font-size: clamp(20px, 4vw, 30px);
+  font-weight: 800;
+  color: var(--cash);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Utility ===== */
+.hidden { display: none !important; }
+
+/* ===== Mobile (≤ 480px) ===== */
+@media (max-width: 480px) {
+  :root {
+    --header-h: 52px;
+    /* Taller panel to fit stacked controls: label(12) + input(48) + gap(8) + button(48) + padding(16) ≈ 132px */
+    --panel-h: 136px;
+  }
+
+  /* Stack bet field above button on small screens */
+  .control-group {
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 0;
+    justify-content: center;
+  }
+
+  .bet-field {
+    width: 100%;
+  }
+
+  .main-btn,
+  #play-again-btn {
+    width: 100%;
+  }
+
+  #balance-wrap .label:last-child { display: none; } /* hide "coins" text */
+
+  #result-box {
+    padding: 20px 16px;
+  }
+}
+
+/* ===== Tablet (481px – 768px) ===== */
+@media (min-width: 481px) and (max-width: 768px) {
+  :root {
+    --header-h: 64px;
+    --panel-h: 110px;
+  }
+
+  .control-group {
+    max-width: 560px;
+  }
+}
+
+/* ===== Large desktop (≥ 1280px) ===== */
+@media (min-width: 1280px) {
+  :root {
+    --header-h: 80px;
+    --panel-h: 130px;
+  }
+
+  .control-group {
+    max-width: 700px;
+  }
+}
+
+/* ===== Touch / pointer coarse (stylus & finger) ===== */
+@media (pointer: coarse) {
+  /* Larger tap targets */
+  .bet-adj,
+  .main-btn,
+  #play-again-btn {
+    min-height: 52px;
+  }
+
+  input#bet-input {
+    min-height: 52px;
+    font-size: 18px;
+  }
+
+  /* Prevent hover states from sticking on touch */
+  .main-btn:hover  { transform: none; }
+  .bet-adj:hover   { background: var(--panel2); border-color: var(--border); }
+}
+
+/* ===== Landscape phone (height < 500px) ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --header-h: 44px;
+    /* Keep controls horizontal in landscape — no stacking */
+    --panel-h: 72px;
+  }
+
+  /* Force horizontal layout in landscape */
+  .control-group {
+    flex-direction: row !important;
+    gap: 8px;
+  }
+
+  .main-btn,
+  #play-again-btn {
+    width: auto !important;
+  }
+
+  #multiplier-label { display: none; }
+  #crash-label      { display: none; }
+  .bet-field label  { display: none; }
+}
+
+/* ===== Cashout Float Toast ===== */
+#cashout-toast {
+  position: absolute;
+  left: 28%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 900;
+  color: #4cd964;
+  text-shadow: 0 0 24px rgba(76, 217, 100, 0.8), 0px 4px 8px rgba(0,0,0,0.8);
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  font-variant-numeric: tabular-nums;
+  will-change: transform, opacity;
+}
+
+.toast-anim {
+  animation: float-up 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes float-up {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(0.2); }
+  10% { opacity: 1; transform: translate(-50%, -30px) scale(1.3); }
+  20% { opacity: 1; transform: translate(-50%, -20px) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -60px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80px) scale(0.8); }
+}
