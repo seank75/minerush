@@ -206,13 +206,21 @@ class Renderer {
     this.batContainer.appendChild(el);
 
     const scale = (0.3 + Math.random() * 0.4) * this.baseScale;
+    
+    // Position bats high in the air above the rails
+    // railY is absolute canvas coordinate (e.g. 450)
+    const railY = this.getRailHeight(this.W * 0.3);
+    // Relative startY in container (offset by 120px header)
+    const containerRelativeRailY = railY - 120;
+    const startY = containerRelativeRailY - (120 * this.baseScale) - Math.random() * (150 * this.baseScale);
+
     const bat = {
       el: el,
-      x: this.W + 50 + Math.random() * 200,
-      startY: 50 + Math.random() * (this.H * 0.5),
-      speed: 4 + Math.random() * 4,
-      amp: 30 + Math.random() * 50,
-      freq: 2 + Math.random() * 3,
+      x: this.W + 50 + Math.random() * 300,
+      startY: startY,
+      speed: 12 + Math.random() * 12, // Much faster
+      amp: 20 + Math.random() * 40,
+      freq: 3 + Math.random() * 4,
       time: Math.random() * 10,
       scale: scale
     };
@@ -387,9 +395,10 @@ class Renderer {
     
     ctx.beginPath();
     ctx.moveTo(0, H);
-    // Trace ground contour
-    for(let x = 0; x <= W + 20; x += 20) {
-      ctx.lineTo(x, this.getRailHeight(x));
+    // Trace ground contour - overlap rails substantially to cover the top line
+    const groundOverlap = 45 * this.baseScale;
+    for(let x = 0; x <= W + 40; x += 40) {
+      ctx.lineTo(x, this.getRailHeight(x) - groundOverlap);
     }
     ctx.lineTo(W, H);
     ctx.closePath();
@@ -399,9 +408,9 @@ class Renderer {
     ctx.strokeStyle = '#3d2510';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(0, this.getRailHeight(0));
-    for(let x = 20; x <= W + 20; x += 20) {
-      ctx.lineTo(x, this.getRailHeight(x));
+    ctx.moveTo(0, this.getRailHeight(0) - groundOverlap);
+    for(let x = 40; x <= W + 40; x += 40) {
+      ctx.lineTo(x, this.getRailHeight(x) - groundOverlap);
     }
     ctx.stroke();
   }

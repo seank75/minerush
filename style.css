@@ -51,7 +51,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 clamp(12px, 4vw, 28px);
-  height: var(--header-h);
+  height: 120px; /* Fixed height to prevent layout jumps */
   background: var(--panel);
   border-bottom: 1px solid var(--border);
   z-index: 10;
@@ -144,10 +144,14 @@ html, body {
 /* ===== Bat Elements (DOM) ===== */
 #bat-container {
   position: absolute;
-  inset: 0;
+  top: 120px; /* Fixed: Match header height */
+  left: 0;
+  width: 100%;
+  height: calc(100% - 120px - var(--panel-h)); /* Fixed: Match canvas area */
   pointer-events: none;
   overflow: hidden;
   z-index: 5;
+  display: block;
 }
 
 .bat-element {
@@ -157,6 +161,8 @@ html, body {
   will-change: transform;
   /* Multiply handles the white background of the GIF against dark cave */
   mix-blend-mode: multiply;
+  /* Boost contrast/brightness to make sure white is pure 255 for multiplication */
+  filter: contrast(1.2) brightness(1.1);
   pointer-events: none;
 }
 
@@ -169,6 +175,9 @@ html, body {
   width: 100%;
   /* Canvas height fills remaining space between header and bottom panel */
   min-height: 0;
+  /* Isolate layout and size to prevent jitter when multiplier grows */
+  contain: strict;
+  user-select: none;
 }
 
 /* ===== Countdown Overlay ===== */
